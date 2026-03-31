@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F1 Coast Racer - Progetto Scuola</title>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, sans-serif; background: #111; color: white; }
+        
+        /* Schermata di Accesso */
+        #login-screen {
+            position: absolute; width: 100%; height: 100%; 
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&q=80&w=1000');
+            background-size: cover; z-index: 100;
+        }
+
+        .login-box {
+            background: rgba(0, 0, 0, 0.85);
+            padding: 40px;
+            border-radius: 20px;
+            border: 2px solid #e60000;
+            text-align: center;
+            box-shadow: 0 0 20px rgba(230, 0, 0, 0.5);
+        }
+
+        /* Garage e Personalizzazione */
+        #garage-screen {
+            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            flex-direction: row; justify-content: space-between; align-items: flex-start;
+            padding: 40px; box-sizing: border-box; z-index: 90; pointer-events: none;
+        }
+        .ui-panel {
+            background: rgba(0, 0, 0, 0.8); padding: 20px; border-radius: 15px;
+            border: 2px solid #444; pointer-events: auto; width: 300px;
+        }
+
+        /* Classifica */
+        #leaderboard-list { margin-top: 10px; max-height: 400px; overflow-y: auto; }
+        .leaderboard-entry { 
+            display: flex; justify-content: space-between; padding: 8px 0; 
+            border-bottom: 1px solid #333; font-size: 14px;
+        }
+
+        /* Game UI */
+        #game-ui {
+            display: none; position: absolute; top: 20px; width: 100%; text-align: center;
+            z-index: 80; pointer-events: none;
+        }
+        #score { font-size: 48px; font-weight: bold; color: #ff0000; text-shadow: 2px 2px #000; }
+
+        /* Modali */
+        .overlay {
+            display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.95); padding: 40px; border-radius: 20px;
+            text-align: center; border: 4px solid red; z-index: 200;
+        }
+
+        /* Bottoni e Input */
+        input { 
+            padding: 12px; font-size: 16px; border-radius: 5px; border: 1px solid #444; 
+            margin-bottom: 15px; width: 280px; display: block;
+            background: #222; color: white;
+        }
+        button {
+            padding: 12px 25px; font-size: 18px; cursor: pointer; background: #e60000;
+            color: white; border: none; border-radius: 5px; font-weight: bold; transition: 0.3s;
+            width: 100%;
+        }
+        button:hover { background: #ff3333; transform: scale(1.02); }
+        .color-btn { width: 40px; height: 40px; border-radius: 50%; border: 2px solid white; cursor: pointer; display: inline-block; margin: 5px; }
+
+        h1, h2 { margin-top: 0; color: #ff0000; text-transform: uppercase; letter-spacing: 2px; }
+        label { display: block; text-align: left; margin-bottom: 5px; font-size: 14px; color: #aaa; }
+    </style>
+</head>
+<body>
+
+    <!-- 1. LOGIN / REGISTRAZIONE -->
+    <div id="login-screen">
+        <div class="login-box">
+            <h1>F1 Coast Racer</h1>
+            <p>Accesso Piloti</p>
+            
+            <label for="user-email">Email</label>
+            <input type="email" id="user-email" placeholder="pilota@esempio.it">
+            
+            <label for="user-pass">Password</label>
+            <input type="password" id="user-pass" placeholder="••••••••">
+            
+            <label for="user-name">Nome in gara (per la classifica)</label>
+            <input type="text" id="user-name" placeholder="Es: Schumi99" maxlength="12">
+            
+            <button onclick="handleLogin()">Accedi ed Entra nel Garage</button>
+            <p id="login-error" style="color: #ff3333; font-size: 12px; margin-top: 10px;"></p>
+        </div>
+    </div>
+
+    <!-- 2. GARAGE -->
+    <div id="garage-screen">
+        <div class="ui-panel">
+            <h2>Pilota: <span id="display-name">-</span></h2>
+            <p>Personalizzazione Auto & Tuta:</p>
+            <div id="color-picker">
+                <div class="color-btn" style="background: #ff0000;" onclick="handleChangeColor(0xff0000)"></div>
+                <div class="color-btn" style="background: #0000ff;" onclick="handleChangeColor(0x0000ff)"></div>
+                <div class="color-btn" style="background: #ffff00;" onclick="handleChangeColor(0xffff00)"></div>
+                <div class="color-btn" style="background: #00ff00;" onclick="handleChangeColor(0x00ff00)"></div>
+                <div class="color-btn" style="background: #ffffff;" onclick="handleChangeColor(0xffffff)"></div>
+            </div>
+            <br><br>
+            <button onclick="handleStartGame()" style="font-size: 24px;">SCENDI IN PISTA</button>
+        </div>
+
+        <div class="ui-panel">
+            <h2>🏆 Classifica Mondiale</h2>
+            <div id="leaderboard-list">
+                <p style="color: #888;">Connessione al database...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. INTERFACCIA GARA -->
+    <div id="game-ui">
+        <div id="score">Punti: 0</div>
+        <div style="color: white; background: rgba(0,0,0,0.5); display: inline-block; padding: 5px 15px; border-radius: 20px;">
+            A/D per curvare • W per Turbo
+        </div>
+    </div>
+
+    <!-- 4. GAME OVER -->
+    <div id="game-over" class="overlay">
+        <h1>Incidente!</h1>
+        <p id="final-score" style="font-size: 24px;"></p>
+        <button onclick="handleReset()">Torna al Garage</button>
+    </div>
+
+    <!-- LIBRERIE -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <!-- PONTE TRA INTERFACCIA E LOGICA -->
+    <script>
+        function handleLogin() {
+            const email = document.getElementById('user-email').value;
+            const pass = document.getElementById('user-pass').value;
+            const name = document.getElementById('user-name').value;
+            
+            if(!email || !pass || !name) {
+                document.getElementById('login-error').innerText = "Compila tutti i campi!";
+                return;
+            }
+
+            // Chiamata alla funzione nel file main.js
+            if (window.goToGarage) {
+                window.goToGarage(email, pass, name);
+            }
+        }
+
+        function handleStartGame() {
+            if (window.startGame) window.startGame();
+        }
+
+        function handleReset() {
+            if (window.resetToGarage) window.resetToGarage();
+        }
+
+        function handleChangeColor(hex) {
+            if (window.changeTeamColor) window.changeTeamColor(hex);
+        }
+    </script>
+
+    <!-- CARICAMENTO LOGICA DI GIOCO -->
+    <script type="module" src="main.js"></script>
+
+</body>
+</html>
